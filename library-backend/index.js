@@ -1,23 +1,21 @@
-require('dotenv').config(); //ALWAYS AT TOP - for loading user/pass
-
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 
-const bookRoutes = require('./routes/books');
+const loginRoutes = require('./routes/login');
+const bookRoutes = require('./routes/books'); // add later
+const { auth } = require('./middleware/auth');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(bodyParser.json()); //for parsing json data from the frontend
+app.use(express.json());
 
-app.get('/', (req, res) => {
-    res.status(200).send('Welcome to the Book API! Use /books to access book-related endpoints.');
-});
+app.get('/', (_req, res) => res.send('Library API up.'));
 
-app.use('/books', bookRoutes); 
+app.use('/api', loginRoutes);
+app.use('/books', bookRoutes); // example protect later
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-})
+app.use((req, res) => res.status(404).json({ message: 'Not found' }));
+app.listen(PORT, () => console.log(`Server running http://localhost:${PORT}`));

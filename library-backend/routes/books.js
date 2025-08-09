@@ -2,51 +2,39 @@ const express = require('express');
 const router = express.Router();
 const { getConnection } = require('../db/oracle');
 
-//POST - /books/add
-router.post('/add', async (req, res) => {
-    const { title, author, genre, isbn, pub_year } = req.body;
-
-    try {
-        const conn = await getConnection();
-        await conn.execute(
-            `BEGIN add_book_sp(:title, :author, :genre, :isbn, :pub_year); END;`,
-            { title, author, genre, isbn, pub_year }
-        );
-        res.status(200).send('BOOK SUCCESFULLY ADDED');
-    } catch (err) {
-        console.error('Error adding book: ', err);
-        res.status(500).send('ERROR ADDING BOOK');
-    }
+// POST /books  -> add a book
+router.post('/addbooks', async (req, res) => {
+  const { title, author, genre, isbn, pub_year } = req.body;
+  let conn;
+  try {
+    conn = await getConnection();
+    await conn.execute(
+     ` BEGIN add_book_sp(:title, :author,  :isbn, :pub_year); END;`,
+      { title, author, isbn, pub_year },
+      { autoCommit: true }
+    );
+    res.status(201).json({ success: true, message: 'BOOK SUCCESSFULLY ADDED' });
+  } catch (err) {
+    console.error('Error adding book:', err);
+    res.status(500).json({ message: 'ERROR ADDING BOOK', detail: err.message });
+  } finally {
+    if (conn) await conn.close().catch(() => {});
+  }
 });
 
-router.post('/users', async (req, res) => {
-    const { name, address, phone, membershuip_no } = req.body;
-
-    try {
-        const conn = await getConnection();
-        await conn.execute(`BEGIN add_user_sp(:name, :address, :phone, :membership_no); END;`,
-            { name, address, phone, membershuip_no }
-        );
-        res.status(200).send('USER ADDED SUCCESFULLY');   
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("ERROR HANDLING USER");
-    }
-});
-
-router.post('/loans', async (req, res) => {
-    const { book_id, patron_id, loan_date, due_date } = req.body;
-
-    try {
-        const conn = await getConnection();
-        await conn.execute(`BEGIN loan_book_sp(:book_id, :patron_id, :loan_date. :due_date); END;`,
-            { book_id, patron_id, loan_date, due_date }
-        );
-        res.status(200).send('LOAN UPDATED SUCCESSFULLY');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('ERROR HANDLING LOAN');
-    }
+// GET /books -> list books (simple example)
+router.get('/getbooks', async (_req, res) => {
+  let conn;
+  try {
+    conn = await getConnection();
+    const result = await conn.execute(`SELECT * from lms_books ORDER BY TITLE`);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching books:', err);
+    res.status(500).json({ message: 'ERROR FETCHING BOOKS', detail: err.message });
+  } finally {
+    if (conn) await conn.close().catch(() => {});
+  }
 });
 
 module.exports = router;
