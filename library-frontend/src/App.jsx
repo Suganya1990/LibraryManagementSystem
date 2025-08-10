@@ -1,10 +1,10 @@
-import AddBook from './pages/AddBook';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
     <div>
       <h1>Library Management System</h1>
-      <AddBook />
+      <Dashboard role="user" />
     </div>
   );
 }
